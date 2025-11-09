@@ -20,5 +20,10 @@ async function startWatch() {
   });
   console.log("Watch response:", res.data);
 }
-
+async function stopWatch() {
+  const res = await gmail.users.stop({
+    userId: "me",
+  });
+  console.log(res.data);
+}
 startWatch();
