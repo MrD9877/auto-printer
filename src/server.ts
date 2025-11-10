@@ -4,12 +4,21 @@ import express from "express";
 import { Buffer } from "buffer";
 import { gmail_v1, google } from "googleapis";
 import fs from "fs";
-import { getHistoryId, writeHistoryId } from "./action/historyId";
-import { Bundle } from "typescript";
+import { decodeBase64url, decodeBase64urlToBuffer } from "./action/decode";
+import { getHistoryIdAndSaveNewHistoryID } from "./db/historyId";
+import { ischeckFileName, writeNewFilename } from "./db/printedFiles";
+import { printPdf } from "./action/printPdf";
+
+export type Media = {
+  mimeType: string;
+  filename: string;
+  data: Buffer<ArrayBufferLike>;
+};
 
 dotenv.config();
 const app = express();
 const port = process.env.PORT || 3001;
+const PRINT_SUBJECT_STRING = "print9000";
 
 app.use(
   express.json({
@@ -27,31 +36,12 @@ oAuth2Client.setCredentials(token);
 
 const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
 
-function getHistoryIdAndSaveNewHistoryID(message: { data: string }) {
-  const decoded = Buffer.from(message.data, "base64").toString("utf8");
-  const data = JSON.parse(decoded);
-  const newHistoryID = data.historyId;
-  const oldHistoryId = getHistoryId();
-  writeHistoryId(`${newHistoryID}`);
-  return oldHistoryId;
-}
-
-function decodeBase64url(str: string) {
-  return Buffer.from(str.replace(/-/g, "+").replace(/_/g, "/"), "base64").toString("utf8");
-}
-
-function decodeBase64urlToBuffer(base64url: string) {
-  // Gmail uses base64url (different from standard base64)
-  const base64 = base64url.replace(/-/g, "+").replace(/_/g, "/");
-  return Buffer.from(base64, "base64");
-}
-
-async function getImagePart(part: gmail_v1.Schema$MessagePart, id: string) {
-  let imgData: Buffer;
-  const images = [];
+async function getMediaPart(part: gmail_v1.Schema$MessagePart, id: string) {
+  let mediaData: Buffer;
+  const media: Media[] = [];
 
   if (part.body.data) {
-    imgData = decodeBase64urlToBuffer(part.body.data);
+    mediaData = decodeBase64urlToBuffer(part.body.data);
   } else if (part.body.attachmentId) {
     // 🔥 fetch the attachment data using the attachmentId
     const attachment = await gmail.users.messages.attachments.get({
@@ -59,26 +49,34 @@ async function getImagePart(part: gmail_v1.Schema$MessagePart, id: string) {
       messageId: id,
       id: part.body.attachmentId,
     });
-    imgData = decodeBase64urlToBuffer(attachment.data.data);
+    mediaData = decodeBase64urlToBuffer(attachment.data.data);
   }
 
-  images.push({
+  media.push({
     mimeType: part.mimeType,
     filename: part.filename || "unnamed",
-    data: imgData,
+    data: mediaData,
   });
-  return images;
+  return media;
+}
+
+async function checkAndPrintPdf(pdf: Media) {
+  const isAlreadyPrinted = ischeckFileName(pdf.filename);
+  if (!isAlreadyPrinted) return;
+  else {
+    await printPdf(pdf);
+    writeNewFilename(pdf.filename);
+  }
 }
 
 async function getData(id: string) {
   const newmessage = await gmail.users.messages.get({ userId: "me", id });
   const parts = newmessage.data.payload.parts;
   let plainText = "";
-  let htmlText = "";
   let subject = "";
   let from = "";
-  let images = [];
-  let pdf = [];
+  let pdfs: Media[] = [];
+  //// headers from and subject
   const headers = newmessage.data.payload.headers;
   for (let i = 0; i < headers.length; i++) {
     if (headers[i].name === "Subject") {
@@ -88,32 +86,30 @@ async function getData(id: string) {
       from = headers[i].value;
     }
   }
+
+  // body text and media
   for (const part of parts) {
     if (part.mimeType === "text/plain") {
       plainText = decodeBase64url(part.body.data)
         .replace(/[\r\n]+/g, "")
         .trim();
-    } else if (part.mimeType === "text/html") {
-      htmlText = decodeBase64url(part.body.data)
-        .replace(/[\r\n]+/g, "")
-        .trim();
-    }
-    // handle any image type (png, jpeg, etc.)
-    if (part.mimeType.startsWith("image/")) {
-      images = await getImagePart(part, id);
     }
     if (part.mimeType === "application/pdf") {
-      pdf = await getImagePart(part, id);
+      pdfs = await getMediaPart(part, id);
     }
   }
-  if (images && images.length > 0 && images[0].filename) {
-    fs.writeFileSync(`./${images[0].filename}`, images[0].data);
-  }
-  if (pdf && pdf.length > 0) {
-    fs.writeFileSync(`./${pdf[0].filename}`, pdf[0].data);
+
+  // if (pdf && pdf.length > 0) {
+  //   fs.writeFileSync(`./storage/pdf/${pdf[0].filename}`, pdf[0].data);
+  // }
+
+  if (pdfs && pdfs.length > 0 && subject === PRINT_SUBJECT_STRING) {
+    for (let i = 0; i < pdfs.length; i++) {
+      await checkAndPrintPdf(pdfs[i]);
+    }
   }
 
-  console.log({ plainText, htmlText, from, subject, images });
+  console.log({ plainText, from, subject });
 }
 
 function getMessageIds(historyList: gmail_v1.Schema$History[]) {
@@ -151,7 +147,6 @@ app.post("/gmail/notifications", async (req, res) => {
       startHistoryId: historyId, // from your notification
     });
     const historyList = history.data.history;
-    console.log(historyList);
     const messageIds = getMessageIds(historyList);
     await getMails(messageIds);
     res.sendStatus(200);
