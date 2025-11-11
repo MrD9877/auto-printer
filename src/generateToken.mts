@@ -15,7 +15,7 @@ const authUrl = oAuth2Client.generateAuthUrl({
 });
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url!, `http://localhost:3000`);
+  const url = new URL(req.url!, process.env.REDIRECT_URI);
   const code = url.searchParams.get("code");
   if (!code) {
     res.end("No code in query string");

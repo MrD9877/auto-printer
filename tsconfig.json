@@ -10,5 +10,7 @@
     "allowJs": true,
     "checkJs": false,
     "moduleResolution": "nodenext"
-  }
+  },
+  "include": ["src"],
+  "exclude": ["./install-service.mjs", "./uninstall-service.mjs"]
 }

@@ -3,6 +3,9 @@ import fs from "fs";
 import dotenv from "dotenv";
 dotenv.config();
 
+const args = process.argv.slice(2); // skip ["node", "dist/server.js"]
+const value = args[0]; // "value"
+
 const oAuth2Client = new google.auth.OAuth2(process.env.GOOGLE_ID, process.env.GOOGLE_SECRET, "https://fjdhtm4n-3001.inc1.devtunnels.ms/");
 
 // After getting token manually once
@@ -26,4 +29,9 @@ async function stopWatch() {
   });
   console.log(res.data);
 }
-startWatch();
+
+if (value === "stop") {
+  stopWatch();
+} else if (value === "start") {
+  startWatch();
+}
