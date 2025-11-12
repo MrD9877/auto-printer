@@ -1,7 +1,7 @@
 import { print } from "pdf-to-printer";
 import fs from "fs";
 import path from "path";
-import { Media } from "../server";
+import { Media } from "../server.mjs";
 
 export async function printPdf(pdf: Media, printer?: string, paperSize?: string, silent?: boolean) {
   const filePath = path.resolve("./downloads", pdf.filename);

@@ -2,8 +2,8 @@
   "name": "auto-print-9000",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
-  "bin": "dist/server.js",
+  "main": "server.mjs",
+  "bin": "dist/server.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "register": "tsc && node dist/index.js start",
@@ -21,6 +21,7 @@
     "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "googleapis": "^165.0.0",
+    "localtunnel": "^2.0.2",
     "node-windows": "^1.0.0-beta.8",
     "open": "^10.2.0",
     "pdf-to-printer": "^5.6.1",
@@ -30,6 +31,7 @@
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.5"
+    "@types/express": "^5.0.5",
+    "@types/localtunnel": "^2.0.4"
   }
 }

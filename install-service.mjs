@@ -9,7 +9,7 @@ const __dirname = path.dirname(__filename);
 const svc = new Service({
   name: "AutoPrint",
   description: "Runs a local print server",
-  script: path.join(__dirname, "dist", "server.js"), // <- full path automatically
+  script: path.join(__dirname, "dist", "server.mjs"), // <- full path automatically
 });
 
 // Listen for events so you know what’s happening

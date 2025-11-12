@@ -4,10 +4,14 @@ import express from "express";
 import { Buffer } from "buffer";
 import { gmail_v1, google } from "googleapis";
 import fs from "fs";
-import { decodeBase64url, decodeBase64urlToBuffer } from "./action/decode";
-import { getHistoryIdAndSaveNewHistoryID } from "./db/historyId";
-import { ischeckFileName, writeNewFilename } from "./db/printedFiles";
-import { printPdf } from "./action/printPdf";
+import { decodeBase64url, decodeBase64urlToBuffer } from "./action/decode.js";
+import { getHistoryIdAndSaveNewHistoryID } from "./db/historyId.js";
+import { ischeckFileName, writeNewFilename } from "./db/printedFiles.js";
+import { printPdf } from "./action/printPdf.js";
+import { forwardPort } from "./action/forwartPort.js";
+import { runScript } from "./action/runScript.js";
+
+// import { changeURL } from "./db/updateEnv";
 
 export type Media = {
   mimeType: string;
@@ -16,10 +20,10 @@ export type Media = {
 };
 
 dotenv.config();
-const app = express();
-const port = process.env.PORT || 3001;
+const port = Number(process.env.PORT) || 3001;
 const PRINT_SUBJECT_STRING = "print9000";
 
+const app = express();
 app.use(
   express.json({
     type: ["application/json", "text/plain"],
@@ -30,8 +34,11 @@ app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
+const url = await forwardPort(port);
+await runScript();
+
 const token = JSON.parse(fs.readFileSync("./token.json", "utf8"));
-const oAuth2Client = new google.auth.OAuth2(process.env.GOOGLE_ID, process.env.GOOGLE_SECRET, "https://fjdhtm4n-3001.inc1.devtunnels.ms/");
+const oAuth2Client = new google.auth.OAuth2(process.env.GOOGLE_ID, process.env.GOOGLE_SECRET, url);
 oAuth2Client.setCredentials(token);
 
 const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
@@ -156,6 +163,6 @@ app.post("/gmail/notifications", async (req, res) => {
   }
 });
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`Example app listening on port ${port} in ${process.env.NODE_ENV || "DEV"}`);
 });
