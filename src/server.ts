@@ -1,4 +1,3 @@
-import dotenv from "dotenv";
 import express from "express";
 
 import { Buffer } from "buffer";
@@ -10,20 +9,22 @@ import { ischeckFileName, writeNewFilename } from "./db/printedFiles.js";
 import { printPdf } from "./action/printPdf.js";
 import { forwardPort } from "./action/forwartPort.js";
 import { runScript } from "./action/runScript.js";
-
-// import { changeURL } from "./db/updateEnv";
+import { getSecret } from "./db/env.js";
+import path from "path";
 
 export type Media = {
   mimeType: string;
   filename: string;
   data: Buffer<ArrayBufferLike>;
 };
+const secret = getSecret();
 
-dotenv.config();
-const port = Number(process.env.PORT) || 3001;
+const port = Number(secret.PORT) || 3001;
 const PRINT_SUBJECT_STRING = "print9000";
 
 const app = express();
+console.log(path.join(process.cwd(), "dist", "index.js"));
+
 app.use(
   express.json({
     type: ["application/json", "text/plain"],
@@ -33,12 +34,15 @@ app.use(
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
+let url = "";
 
-const url = await forwardPort(port);
-await runScript();
+async function initFn() {
+  url = await forwardPort(port);
+  await runScript();
+}
 
 const token = JSON.parse(fs.readFileSync("./token.json", "utf8"));
-const oAuth2Client = new google.auth.OAuth2(process.env.GOOGLE_ID, process.env.GOOGLE_SECRET, url);
+const oAuth2Client = new google.auth.OAuth2(secret.GOOGLE_ID, secret.GOOGLE_SECRET, url);
 oAuth2Client.setCredentials(token);
 
 const gmail = google.gmail({ version: "v1", auth: oAuth2Client });
@@ -164,5 +168,6 @@ app.post("/gmail/notifications", async (req, res) => {
 });
 
 app.listen(port, async () => {
-  console.log(`Example app listening on port ${port} in ${process.env.NODE_ENV || "DEV"}`);
+  console.log(`Example app listening on port ${port} in ${secret.NODE_ENV || "DEV"}`);
+  initFn();
 });

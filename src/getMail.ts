@@ -1,14 +1,12 @@
-import dotenv from "dotenv";
-
 import { Buffer } from "buffer";
 import { gmail_v1, google } from "googleapis";
-import { GaxiosResponse } from "gaxios";
 import fs from "fs";
+import { getSecret } from "./db/env";
 
-dotenv.config();
+const secret = getSecret();
 
 const token = JSON.parse(fs.readFileSync("./token.json", "utf8"));
-const oAuth2Client = new google.auth.OAuth2(process.env.GOOGLE_ID, process.env.GOOGLE_SECRET, "https://fjdhtm4n-3001.inc1.devtunnels.ms/");
+const oAuth2Client = new google.auth.OAuth2(secret.GOOGLE_ID, secret.GOOGLE_SECRET, "https://fjdhtm4n-3001.inc1.devtunnels.ms/");
 oAuth2Client.setCredentials(token);
 
 const gmail = google.gmail({ version: "v1", auth: oAuth2Client });

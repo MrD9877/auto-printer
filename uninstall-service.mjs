@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 
 const svc = new Service({
   name: "AutoPrint",
-  script: path.join(__dirname, "dist", "server.mjs"),
+  script: path.join(__dirname, "dist", "server.js"),
 });
 
 svc.on("uninstall", () => console.log("🧹 Service uninstalled"));

@@ -2,14 +2,14 @@
   "name": "auto-print-9000",
   "version": "1.0.0",
   "description": "",
-  "main": "server.mjs",
-  "bin": "dist/server.mjs",
+  "main": "server.js",
+  "bin": "dist/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "register": "tsc && node dist/index.js start",
     "unregister": "tsc && node dist/index.js stop",
     "generate": "tsc && node dist/generateToken.mjs",
-    "build": "tsc && node install-service.mjs && pkg . --targets node18-win-x64 --output ../MyApp.exe &&  node uninstall-service.mjs"
+    "build": "tsc && node install-service.mjs && pkg . --targets node18-win-x64 --output ./MyApp.exe &&  node uninstall-service.mjs"
   },
   "keywords": [],
   "author": "",
@@ -22,6 +22,7 @@
     "express": "^5.1.0",
     "googleapis": "^165.0.0",
     "localtunnel": "^2.0.2",
+    "ngrok": "^5.0.0-beta.2",
     "node-windows": "^1.0.0-beta.8",
     "open": "^10.2.0",
     "pdf-to-printer": "^5.6.1",

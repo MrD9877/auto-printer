@@ -3,10 +3,10 @@ import http from "http";
 import open from "open"; // npm i open
 import fs from "fs/promises";
 import { google } from "googleapis";
-import dotenv from "dotenv";
-dotenv.config();
-console.log(process.env.GOOGLE_ID);
-const oAuth2Client = new google.auth.OAuth2(process.env.GOOGLE_ID, process.env.GOOGLE_SECRET, process.env.REDIRECT_URI);
+import { getSecret } from "./db/env.js";
+const secret = getSecret();
+
+const oAuth2Client = new google.auth.OAuth2(secret.GOOGLE_ID, secret.GOOGLE_SECRET, secret.REDIRECT_URI);
 const SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"];
 
 const authUrl = oAuth2Client.generateAuthUrl({
@@ -15,7 +15,7 @@ const authUrl = oAuth2Client.generateAuthUrl({
 });
 
 const server = http.createServer(async (req, res) => {
-  const url = new URL(req.url!, process.env.REDIRECT_URI);
+  const url = new URL(req.url!, secret.REDIRECT_URI);
   const code = url.searchParams.get("code");
   if (!code) {
     res.end("No code in query string");

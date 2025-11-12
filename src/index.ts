@@ -1,12 +1,12 @@
 import { google } from "googleapis";
 import fs from "fs";
-import dotenv from "dotenv";
-dotenv.config();
+import { getSecret } from "./db/env";
 
 const args = process.argv.slice(2); // skip ["node", "dist/server.mjs"]
 const value = args[0]; // "value"
 
-const oAuth2Client = new google.auth.OAuth2(process.env.GOOGLE_ID, process.env.GOOGLE_SECRET, process.env.URL);
+const secret = getSecret();
+const oAuth2Client = new google.auth.OAuth2(secret.GOOGLE_ID, secret.GOOGLE_SECRET, secret.URL);
 
 // After getting token manually once
 const tokenJson = fs.readFileSync("./token.json");

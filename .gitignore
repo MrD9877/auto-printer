@@ -31,3 +31,5 @@ yarn-debug.log*
 yarn-error.log*
 
 MyApp.exe
+
+/secret.json
