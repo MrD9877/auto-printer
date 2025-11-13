@@ -7,10 +7,10 @@ import { decodeBase64url, decodeBase64urlToBuffer } from "./action/decode.js";
 import { getHistoryIdAndSaveNewHistoryID } from "./db/historyId.js";
 import { ischeckFileName, writeNewFilename } from "./db/printedFiles.js";
 import { printPdf } from "./action/printPdf.js";
-import { forwardPort } from "./action/forwartPort.js";
 import { runScript } from "./action/runScript.js";
 import { getSecret } from "./db/env.js";
 import path from "path";
+import { getNetworkIP } from "./action/getIP.js";
 
 export type Media = {
   mimeType: string;
@@ -34,10 +34,9 @@ app.use(
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
-let url = "";
+let url = getNetworkIP(port)[0];
 
 async function initFn() {
-  url = await forwardPort(port);
   await runScript();
 }
 
